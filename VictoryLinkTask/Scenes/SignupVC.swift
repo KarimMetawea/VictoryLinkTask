@@ -10,6 +10,7 @@ import UIKit
 
 class SignupVC: UIViewController {
 
+    @IBOutlet weak var profileImage: CircularImageView!
     @IBOutlet weak var nameTextField: UITextField!
     @IBOutlet weak var emailTextField: UITextField!
     @IBOutlet weak var passwordTextFIELD: UITextField!
@@ -20,7 +21,9 @@ class SignupVC: UIViewController {
         // Do any additional setup after loading the view.
     }
     
-
+    @IBAction func joinPressed(_ sender: Any) {
+    }
+    
     /*
     // MARK: - Navigation
 

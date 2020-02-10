@@ -10,13 +10,17 @@ import UIKit
 
 class LoginVC: UIViewController {
 
+    @IBOutlet weak var emailTextField: UIView!
+    @IBOutlet weak var passwordTextField: UITextField!
     override func viewDidLoad() {
         super.viewDidLoad()
 
         // Do any additional setup after loading the view.
     }
     
-
+    @IBAction func login(_ sender: Any) {
+    }
+    
     /*
     // MARK: - Navigation
 
