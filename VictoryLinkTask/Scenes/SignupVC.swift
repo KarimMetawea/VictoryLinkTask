@@ -11,6 +11,8 @@ import Photos
 import FirebaseStorage
 import FirebaseDatabase
 import FirebaseAuth
+
+
 class SignupVC: UIViewController {
 
     @IBOutlet weak var profileImage: CircularImageView!
@@ -26,9 +28,19 @@ class SignupVC: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         ref = Database.database().reference()
+        profileImage.addTapGestureRecognizer {
+            self.checkPhotoLibraryAuthorization()
+        }
 
 
         // Do any additional setup after loading the view.
+    }
+    
+    fileprivate func navigateToHome() {
+        let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! UINavigationController
+        DispatchQueue.main.async{
+            self.present(vc,animated: true)
+        }
     }
     
     @IBAction func joinPressed(_ sender: Any) {
@@ -37,13 +49,19 @@ class SignupVC: UIViewController {
         if self.nameTextField.text != "" && self.emailTextField.text != "" && self.passwordTextFIELD.text != ""
         {
             Auth.auth().createUser(withEmail: emailTextField.text ?? "", password: passwordTextFIELD.text ?? "") { (result, error) in
-                self.uploadMedia { (url) in
-                    self.ref?.child("user").childByAutoId().setValue(["imgUrl":url ?? ""])
-                           }
-                let vc = self.storyboard?.instantiateViewController(identifier: "home") as! HomeVC
-                DispatchQueue.main.async{
-                   self.present(vc,animated: true)
+                if error != nil {
+                    print(error)
+                    return}
+                if let image = self.image {
+                    self.uploadMedia { (url) in
+                                       self.ref?.child("user").childByAutoId().setValue(["imgUrl":url ?? ""])
+                        self.navigateToHome()
+                                              }
+                }else {
+                    self.navigateToHome()
                 }
+               
+
                 
                 
             }
@@ -54,7 +72,6 @@ class SignupVC: UIViewController {
            
 
 
-            self.performSegue(withIdentifier: "post", sender: self)
 
         }
     }
@@ -86,7 +103,9 @@ class SignupVC: UIViewController {
                 self.present(ac,animated: true)
                 
             case .authorized:
-                self.presentPickerController()
+                DispatchQueue.main.async {
+                    self.presentPickerController()
+                }
                 
             }
         }

@@ -7,10 +7,12 @@
 //
 
 import UIKit
+import FirebaseAuth
 
 class LoginVC: UIViewController {
 
-    @IBOutlet weak var emailTextField: UIView!
+    @IBOutlet weak var emailTextField: UITextField!
+    
     @IBOutlet weak var passwordTextField: UITextField!
     override func viewDidLoad() {
         super.viewDidLoad()
@@ -19,6 +21,19 @@ class LoginVC: UIViewController {
     }
     
     @IBAction func login(_ sender: Any) {
+        if self.emailTextField.text != "" && self.passwordTextField.text != "" {
+            Auth.auth().signIn(withEmail: emailTextField.text ?? "", password: passwordTextField.text ?? "") { (result, error) in
+                if let error = error {
+                    print(error.localizedDescription )
+                    return
+                }
+                let vc = self.storyboard?.instantiateViewController(withIdentifier: "home") as! UINavigationController
+                DispatchQueue.main.async {
+                    self.present(vc,animated: true)
+                }
+                
+            }
+        }
     }
     
     /*
