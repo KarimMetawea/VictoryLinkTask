@@ -7,7 +7,10 @@
 //
 
 import UIKit
-
+import Photos
+import FirebaseStorage
+import FirebaseDatabase
+import FirebaseAuth
 class SignupVC: UIViewController {
 
     @IBOutlet weak var profileImage: CircularImageView!
@@ -15,14 +18,116 @@ class SignupVC: UIViewController {
     @IBOutlet weak var emailTextField: UITextField!
     @IBOutlet weak var passwordTextFIELD: UITextField!
     
+    var ref:DatabaseReference?
+
+    
+    var image:UIImage?
+    
     override func viewDidLoad() {
         super.viewDidLoad()
+        ref = Database.database().reference()
+
 
         // Do any additional setup after loading the view.
     }
     
     @IBAction func joinPressed(_ sender: Any) {
+        
+        
+        if self.nameTextField.text != "" && self.emailTextField.text != "" && self.passwordTextFIELD.text != ""
+        {
+            Auth.auth().createUser(withEmail: emailTextField.text ?? "", password: passwordTextFIELD.text ?? "") { (result, error) in
+                self.uploadMedia { (url) in
+                    self.ref?.child("user").childByAutoId().setValue(["imgUrl":url ?? ""])
+                           }
+                let vc = self.storyboard?.instantiateViewController(identifier: "home") as! HomeVC
+                DispatchQueue.main.async{
+                   self.present(vc,animated: true)
+                }
+                
+                
+            }
+            
+           
+            
+
+           
+
+
+            self.performSegue(withIdentifier: "post", sender: self)
+
+        }
     }
+    
+    func checkPhotoLibraryAuthorization(){
+        PHPhotoLibrary.requestAuthorization { (status) in
+            switch status {
+                
+            case .notDetermined:
+                if status == PHAuthorizationStatus.authorized{
+                    self.presentPickerController()
+                }
+            case .restricted:
+                let ac = UIAlertController(title: "Access Restricted", message: "you restricted this app from using photo library you can enable it in phone settings", preferredStyle: .alert)
+                ac.addAction(UIAlertAction(title: "ok", style: .default, handler: nil))
+                self.present(ac,animated: true)
+                
+            case .denied:
+                let ac = UIAlertController(title: "access denied", message: "you denied this app from using photo library you can enable it in phone settings", preferredStyle: .alert)
+                ac.addAction(UIAlertAction(title: "ok", style: .default))
+                ac.addAction(UIAlertAction(title: "Go Settings", style: .default, handler: { (_) in
+                    DispatchQueue.main.async {
+                        //                            opening the user settings
+                        let url = URL(string: UIApplication.openSettingsURLString)!
+                        UIApplication.shared.open(url, options: [:], completionHandler: nil)
+                        
+                    }
+                }))
+                self.present(ac,animated: true)
+                
+            case .authorized:
+                self.presentPickerController()
+                
+            }
+        }
+    }
+    
+    fileprivate func presentPickerController() {
+        let imagePicker = UIImagePickerController()
+        imagePicker.allowsEditing = true
+        imagePicker.sourceType = .photoLibrary
+        imagePicker.delegate = self
+        self.present(imagePicker,animated: true)
+    }
+    
+    
+    func uploadMedia(completion: @escaping (_ url: String?) -> Void) {
+        let storageRef = Storage.storage().reference().child("myImage.png")
+        if let image = image{
+            if let uploadData = image.pngData() {
+                      storageRef.putData(uploadData, metadata: nil) { (metadata, error) in
+                          if error != nil {
+                              print("error")
+                              completion(nil)
+                          } else {
+                            storageRef.downloadURL { (url, error) in
+                                if let imgurl = url?.absoluteString{
+                                    
+                                    completion(imgurl)
+                                }
+                            }
+//                            completion()
+                              // your uploaded photo url.
+                          }
+                     }
+               }
+        }
+      
+    }
+    
+    
+    
+    
     
     /*
     // MARK: - Navigation
@@ -34,4 +139,21 @@ class SignupVC: UIViewController {
     }
     */
 
+}
+
+
+
+extension SignupVC:UIImagePickerControllerDelegate,UINavigationControllerDelegate{
+    //    delegate methods for choosing an image from library
+    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [UIImagePickerController.InfoKey : Any]) {
+        
+        if let image = info[.editedImage] as? UIImage {
+            self.profileImage.image = image
+            self.image = image
+        }
+        //        if let image = info[UIImagePickerController.InfoKey.originalImage] as? UIImage {
+        //            self.image = image
+        //        }
+        dismiss(animated: true, completion: nil)
+    }
 }
